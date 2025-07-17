@@ -4,6 +4,8 @@
 #Validates magic number when opening files.
 #Allows users to quit the program gracefully
 
+#DATE:DEC6 7:12PM
+
 import os
 
 MAGIC_NUMBER = b'4337PRJ3'
