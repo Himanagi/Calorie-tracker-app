@@ -1,7 +1,23 @@
 import React from "react";
 
 export default function EntriesTable({ entries, onDeleteEntry }) {
-  if (!entries.length) return <p style={{ marginTop: 20 }}>No entries yet.</p>;
+  if (!entries.length) return (
+    <div style={{
+      textAlign: "center",
+      padding: "40px 20px",
+      color: "#7c3f3f",
+      fontFamily: "'Inter', sans-serif",
+      fontSize: "18px",
+      background: "#fff7f5",
+      borderRadius: "16px",
+      boxShadow: "0 6px 12px rgba(0,0,0,0.05)",
+      marginTop: 20
+    }}>
+       No Entries Yet!<br />
+
+    </div>
+  );
+  
 
   return (
     <div style={{
@@ -25,48 +41,54 @@ export default function EntriesTable({ entries, onDeleteEntry }) {
           </tr>
         </thead>
         <tbody>
-          {entries.map(entry => {
-            const timeString = entry.createdAtDate
-              ? entry.createdAtDate.toLocaleString(undefined, {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  month: "short",
-                  day: "numeric"
-                })
-              : "—";
+        {entries.map(entry => {
+  const isWorkout = entry.type === "workout";
+  const timeString = entry.createdAtDate
+    ? entry.createdAtDate.toLocaleString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        month: "short",
+        day: "numeric"
+      })
+    : "—";
 
-            return (
-              <tr key={entry.id} style={rowStyle}>
-                <td style={tdStyle}>{entry.foodName}</td>
-                <td style={tdStyle}>{entry.quantity}</td>
-                <td style={tdStyle}>{Math.round(entry.nutrients?.calories || 0)}</td>
-                <td style={tdStyle}>{Math.round(entry.nutrients?.protein || 0)}</td>
-                <td style={tdStyle}>{Math.round(entry.nutrients?.carbs || 0)}</td>
-                <td style={tdStyle}>{Math.round(entry.nutrients?.fiber || 0)}</td>
-                <td style={tdStyle}>{Math.round(entry.nutrients?.fat || 0)}</td>
-                <td style={tdStyle}>{timeString}</td>
-                <td style={tdStyle}>
-                  <button
-                    onClick={() => onDeleteEntry(entry.id)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "red",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      transition: "transform 0.2s ease",
-                    }}
-                    onMouseOver={e => e.currentTarget.style.transform = "scale(1.2)"}
-                    onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
-                    title="Delete entry"
-                  >
-                    ×
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
+  return (
+    <tr key={entry.id} style={{
+      ...rowStyle,
+      background: entry.type === "workout" ? "#fdeaf2" : "#fff",
+    }}>
+    
+      <td style={tdStyle}>{isWorkout ? entry.workoutName : entry.foodName}</td>
+      <td style={tdStyle}>{isWorkout ? "—" : entry.quantity}</td>
+      <td style={tdStyle}>{Math.round(isWorkout ? entry.caloriesBurned : entry.nutrients?.calories || 0)}</td>
+      <td style={tdStyle}>{isWorkout ? "—" : Math.round(entry.nutrients?.protein || 0)}</td>
+      <td style={tdStyle}>{isWorkout ? "—" : Math.round(entry.nutrients?.carbs || 0)}</td>
+      <td style={tdStyle}>{isWorkout ? "—" : Math.round(entry.nutrients?.fiber || 0)}</td>
+      <td style={tdStyle}>{isWorkout ? "—" : Math.round(entry.nutrients?.fat || 0)}</td>
+      <td style={tdStyle}>{timeString}</td>
+      <td style={tdStyle}>
+        <button
+          onClick={() => onDeleteEntry(entry.id)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "red",
+            fontWeight: "bold",
+            cursor: "pointer",
+            fontSize: "18px",
+            transition: "transform 0.2s ease",
+          }}
+          onMouseOver={e => e.currentTarget.style.transform = "scale(1.2)"}
+          onMouseOut={e => e.currentTarget.style.transform = "scale(1)"}
+          title="Delete entry"
+        >
+          ×
+        </button>
+      </td>
+    </tr>
+  );
+})}
+
         </tbody>
       </table>
     </div>

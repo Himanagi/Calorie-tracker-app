@@ -128,11 +128,15 @@ export default function Dashboard() {
   if (loading) return <p style={{ padding: 40, fontSize: 18 }}>Loading profile...</p>;
 
   const total = {
-    calories: entries.reduce((acc, e) => acc + (e.nutrients?.calories || 0), 0),
+    calories: entries.reduce((acc, e) => {
+      if (e.type === "workout") return acc - (e.caloriesBurned || 0); // subtracting negative = adding
+      return acc + (e.nutrients?.calories || 0);
+    }, 0),
     protein: entries.reduce((acc, e) => acc + (e.nutrients?.protein || 0), 0),
     carbs: entries.reduce((acc, e) => acc + (e.nutrients?.carbs || 0), 0),
     fats: entries.reduce((acc, e) => acc + (e.nutrients?.fat || 0), 0),
   };
+  
 
   const targets = {
     calories: profile.calories,

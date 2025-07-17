@@ -11,6 +11,9 @@ export default function FoodInput({ onAddEntry, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const pink = "#fca5a5";
+  const cream = "#fff8f2";
+
   const handleSearch = async () => {
     setError("");
     if (!query) return;
@@ -84,123 +87,57 @@ export default function FoodInput({ onAddEntry, onClose }) {
     }
   };
 
-  const pink = "#fca5a5";
-  const cream = "#fff8f2";
-
   return (
-    <div style={{
-      background: cream,
-      padding: 20,
-      borderRadius: 16,
-      fontFamily: "'Inter', sans-serif",
-      boxShadow: "0 4px 16px rgba(0,0,0,0.08)"
-    }}>
-      <input
-        type="text"
-        placeholder="Search food"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleSearch();
-        }}
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <div
         style={{
+          background: cream,
+          padding: 20,
+          borderRadius: 16,
+          fontFamily: "'Inter', sans-serif",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
           width: "100%",
-          padding: "12px 16px",
-          borderRadius: "12px",
-          border: `2px solid ${pink}`,
-          background: "#fff",
-          fontSize: "16px",
-          marginBottom: "12px",
-        }}
-      />
-      <button
-        onClick={handleSearch}
-        disabled={loading}
-        style={{
-          background: pink,
-          color: "#fff",
-          border: "none",
-          padding: "10px 16px",
-          borderRadius: "12px",
-          fontWeight: "bold",
-          fontSize: "16px",
-          cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          width: "100%"
+          maxWidth: 400,
+          overflowX: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        Search
-      </button>
-
-      {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-
-      {/* 🍒 Search Results */}
-     {results.length > 0 && (
-      <ul style={{ padding: 0, listStyle: "none", marginTop: 16 }}>
-        {results.map((food) => (
-          <li key={food.fdcId} style={{ marginBottom: 10 }}>
-            <div
-              onClick={() => handleSelectFood(food)}
-              style={{
-                background: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: "14px",
-                padding: "14px 16px",
-                cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = "scale(1.02)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
-              }}
-            >
-              {food.description}
-            </div>
-          </li>
-        ))}
-      </ul>
-    )}
-    
-
-      {/* 🍽️ Selected Food Entry */}
-      {selectedFood && nutrients && (
-        <div style={{ marginTop: 20 }}>
-          <h3 style={{ fontSize: 18, marginBottom: 6 }}>{selectedFood.description}</h3>
-          <p style={{ marginBottom: 10 }}>Calories: {nutrients.calories || "N/A"}</p>
-
-          <label style={{ fontSize: 14, marginBottom: 6, display: "block" }}>
-            Quantity:
-            <input
-              type="number"
-              min="0.1"
-              step="0.1"
-              value={quantity}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                setQuantity(isNaN(val) ? 1 : val);
-              }}
-              style={{
-                marginLeft: 10,
-                padding: "8px 12px",
-                borderRadius: "10px",
-                border: `2px solid ${pink}`,
-                background: "#fff",
-                fontSize: "14px",
-                width: "100px",
-              }}
-            />
-          </label>
+        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+  <input
+    type="text"
+    placeholder="Search food"
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") handleSearch();
+    }}
+    style={{
+      width: "100%",
+      maxWidth: "100%",
+      padding: "12px 16px",
+      borderRadius: "12px",
+      border: `2px solid ${pink}`,
+      background: "#fff",
+      fontSize: "16px",
+      marginBottom: "12px",
+      boxSizing: "border-box",
+    }}
+  />
+</div>
 
           <button
-            onClick={handleAdd}
+            onClick={handleSearch}
+            disabled={loading}
             style={{
-              marginTop: 12,
               background: pink,
               color: "#fff",
               border: "none",
@@ -210,13 +147,105 @@ export default function FoodInput({ onAddEntry, onClose }) {
               fontSize: "16px",
               cursor: "pointer",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              width: "100%"
+              width: "100%",
             }}
           >
-            Add to Entries
+            Search
           </button>
+  
+          {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
+  
+          {results.length > 0 && (
+            <ul
+              style={{
+                padding: 0,
+                listStyle: "none",
+                marginTop: 16,
+                width: "100%",
+              }}
+            >
+              {results.map((food) => (
+                <li key={food.fdcId} style={{ marginBottom: 10 }}>
+                  <div
+                    onClick={() => handleSelectFood(food)}
+                    style={{
+                      background: "#fff",
+                      border: "1px solid #ddd",
+                      borderRadius: "14px",
+                      padding: "14px 16px",
+                      cursor: "pointer",
+                      fontFamily: "'Inter', sans-serif",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      width: "100%",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = "scale(1.02)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+                    }}
+                  >
+                    {food.description}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+  
+          {selectedFood && nutrients && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ fontSize: 18, marginBottom: 6 }}>{selectedFood.description}</h3>
+              <p style={{ marginBottom: 10 }}>Calories: {nutrients.calories || "N/A"}</p>
+  
+              <label style={{ fontSize: 14, marginBottom: 6, display: "block" }}>
+                Quantity:
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setQuantity(isNaN(val) ? 1 : val);
+                  }}
+                  style={{
+                    marginLeft: 10,
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                    border: `2px solid ${pink}`,
+                    background: "#fff",
+                    fontSize: "14px",
+                    width: "100px",
+                  }}
+                />
+              </label>
+  
+              <button
+                onClick={handleAdd}
+                style={{
+                  marginTop: 12,
+                  background: pink,
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 16px",
+                  borderRadius: "12px",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  width: "100%",
+                }}
+              >
+                Add to Entries
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
+  
 }
