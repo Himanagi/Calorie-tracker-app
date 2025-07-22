@@ -81,9 +81,9 @@ export default function ProfilePanel({ user, onClose }) {
       }
 
       await updateDoc(ref, updatePayload);
-      setStatus("✅ Changes saved!");
+      setStatus("Changes saved!");
     } catch (err) {
-      setStatus("❌ Error saving changes");
+      setStatus("Error saving changes");
     }
 
     setShowToast(true);
@@ -118,14 +118,14 @@ export default function ProfilePanel({ user, onClose }) {
         />
       </label>
 
-      <EntriesTable entries={entries} onDeleteEntry={() => {}} />
+      <EntriesTable entries={entries.filter(e => e.type !== "water")} onDeleteEntry={() => {}} />
 
       <hr style={dividerStyle} />
 
       <h3 style={headingStyle}>Update Your Profile</h3>
 
       <label style={labelStyle}>
-        ⚖️ Current Weight (lbs):
+        Current Weight (lbs):
         <input
           type="number"
           value={weightLbs}
@@ -146,7 +146,7 @@ export default function ProfilePanel({ user, onClose }) {
       {showGoalEditor && (
         <>
           <label style={labelStyle}>
-            🎯 Your Goal:
+            Your Goal:
             <select
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
@@ -161,7 +161,7 @@ export default function ProfilePanel({ user, onClose }) {
 
           {(goal === "lose_weight" || goal === "gain_weight") && (
             <label style={labelStyle}>
-              🧮 Desired Weight (lbs):
+              Desired Weight (lbs):
               <input
                 type="number"
                 value={desiredWeight}
@@ -174,7 +174,7 @@ export default function ProfilePanel({ user, onClose }) {
       )}
 
       <button onClick={handleSaveChanges} style={saveButtonStyle}>
-        💾 Save Changes
+        Save Changes
       </button>
 
       {showToast && (

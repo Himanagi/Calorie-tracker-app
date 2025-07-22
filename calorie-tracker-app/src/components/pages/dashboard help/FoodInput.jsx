@@ -14,6 +14,8 @@ export default function FoodInput({ onAddEntry, onClose }) {
   const pink = "#fca5a5";
   const cream = "#fff8f2";
 
+  const [unit, setUnit] = useState("");
+
   const handleSearch = async () => {
     setError("");
     if (!query) return;
@@ -37,13 +39,30 @@ export default function FoodInput({ onAddEntry, onClose }) {
       const nutrients = parseNutrients(details);
       setNutrients(nutrients);
       setQuantity(1);
+  
+      // NEW: Extract serving size info and set the unit string
+      const servingSize = details.servingSize;        // number, e.g. 100
+      const servingUnit = details.servingSizeUnit;    // string, e.g. "g", "slice"
+  
+      let unitString = "";
+      if (servingSize && servingUnit) {
+        unitString = `${servingSize} ${servingUnit}`;
+      } else if (servingUnit) {
+        unitString = servingUnit;
+      } else {
+        unitString = "unit";
+      }
+  
+      setUnit(unitString);  // Save the unit string to state
     } catch (err) {
       setError(err.message);
       setNutrients(null);
+      setUnit(""); // clear unit if error
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleAdd = async () => {
     if (!nutrients || quantity <= 0) return;
@@ -96,20 +115,21 @@ export default function FoodInput({ onAddEntry, onClose }) {
       }}
     >
       <div
-        style={{
-          background: cream,
-          padding: 20,
-          borderRadius: 16,
-          fontFamily: "'Inter', sans-serif",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-          width: "100%",
-          maxWidth: 400,
-          overflowX: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+  style={{
+    background: "#fff",
+    border: "1px solid #ddd",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    cursor: "pointer",
+    fontFamily: "'Inter', sans-serif",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    width: "100%",
+    boxSizing: "border-box",  // add this so padding included inside width
+  }}
+  // ... rest of your handlers
+>
+
         <div style={{ width: "100%" }}>
         <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
   <input
@@ -156,41 +176,51 @@ export default function FoodInput({ onAddEntry, onClose }) {
           {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
   
           {results.length > 0 && (
-            <ul
-              style={{
-                padding: 0,
-                listStyle: "none",
-                marginTop: 16,
-                width: "100%",
-              }}
-            >
+        <ul
+        style={{
+          padding: 0,
+          listStyle: "none",
+          marginTop: 16,
+          width: "100%",
+          boxSizing: "border-box",
+          display: "grid",
+          placeItems: "center",     // centers both horizontally + vertically
+          rowGap: 12,               // vertical spacing between items
+        }}
+      >
+      
+       
+          
               {results.map((food) => (
-                <li key={food.fdcId} style={{ marginBottom: 10 }}>
-                  <div
-                    onClick={() => handleSelectFood(food)}
-                    style={{
-                      background: "#fff",
-                      border: "1px solid #ddd",
-                      borderRadius: "14px",
-                      padding: "14px 16px",
-                      cursor: "pointer",
-                      fontFamily: "'Inter', sans-serif",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                      width: "100%",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.transform = "scale(1.02)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
-                    }}
-                  >
-                    {food.description}
-                  </div>
-                </li>
+                <li key={food.fdcId}>
+                <div
+                  onClick={() => handleSelectFood(food)}
+                  style={{
+                    background: "#fff",
+                    border: "1px solid #ddd",
+                    borderRadius: "14px",
+                    padding: "14px 16px",
+                    cursor: "pointer",
+                    fontFamily: "'Inter', sans-serif",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    width: "100%",
+                    maxWidth: 360,             // constrain without hard centering issues
+                    boxSizing: "border-box",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "scale(1.02)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
+                  }}
+                >
+                  {food.description}
+                </div>
+              </li>
+              
               ))}
             </ul>
           )}
@@ -201,27 +231,28 @@ export default function FoodInput({ onAddEntry, onClose }) {
               <p style={{ marginBottom: 10 }}>Calories: {nutrients.calories || "N/A"}</p>
   
               <label style={{ fontSize: 14, marginBottom: 6, display: "block" }}>
-                Quantity:
-                <input
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  value={quantity}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    setQuantity(isNaN(val) ? 1 : val);
-                  }}
-                  style={{
-                    marginLeft: 10,
-                    padding: "8px 12px",
-                    borderRadius: "10px",
-                    border: `2px solid ${pink}`,
-                    background: "#fff",
-                    fontSize: "14px",
-                    width: "100px",
-                  }}
-                />
-              </label>
+  Quantity ({unit || "unit"}):
+  <input
+    type="number"
+    min="0.1"
+    step="0.1"
+    value={quantity}
+    onChange={(e) => {
+      const val = parseFloat(e.target.value);
+      setQuantity(isNaN(val) ? 1 : val);
+    }}
+    style={{
+      marginLeft: 10,
+      padding: "8px 12px",
+      borderRadius: "10px",
+      border: `2px solid ${pink}`,
+      background: "#fff",
+      fontSize: "14px",
+      width: "100px",
+    }}
+  />
+</label>
+
   
               <button
                 onClick={handleAdd}
