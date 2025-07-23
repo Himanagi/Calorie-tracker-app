@@ -235,7 +235,7 @@ export default function FoodInput({ onAddEntry, onClose }) {
   <input
     type="number"
     min="0.1"
-    step="0.1"
+    step="1"
     value={quantity}
     onChange={(e) => {
       const val = parseFloat(e.target.value);

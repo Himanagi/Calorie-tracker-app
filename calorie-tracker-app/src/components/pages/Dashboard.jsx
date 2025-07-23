@@ -11,8 +11,7 @@ import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import ProfilePanel from "../profile page/ProfilePanel";
 
-// ----- New Color Palette -----
-const softPink = "#FFE0F0";
+// ----- Color Palette -----
 const blushPink = "#FFC2D6";
 const coral = "#FF7E9D";
 const lightCoral = "#FFA6C1";
@@ -30,21 +29,34 @@ const floralBackground = `
 `;
 
 export default function Dashboard() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [showFoodPanel, setShowFoodPanel] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [showStreakNotification, setShowStreakNotification] = useState(true);
   const auth = getAuth();
   const navigate = useNavigate();
+  const currentUser = auth.currentUser;
 
-const [streak, setStreak] = useState(0);
-const currentUser = auth.currentUser;
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-
-
+  // Hide streak notification after 5 seconds
+  useEffect(() => {
+    if (streak > 0 && showStreakNotification) {
+      const timer = setTimeout(() => {
+        setShowStreakNotification(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [streak, showStreakNotification]);
 
   function calculateProfileMetrics(profile) {
     const heightCm = (profile.heightFeet || 0) * 30.48 + (profile.heightInches || 0) * 2.54;
@@ -107,7 +119,7 @@ const currentUser = auth.currentUser;
       entries.map((entry) => {
         const entryDate = entry.date?.seconds
           ? new Date(entry.date.seconds * 1000)
-          : new Date(entry.date); // fallback for Date objects
+          : new Date(entry.date);
         return entryDate.toDateString();
       })
     );
@@ -128,8 +140,6 @@ const currentUser = auth.currentUser;
     setStreak(streakCount);
   }, [entries]);
   
-  
-
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
@@ -189,13 +199,25 @@ const currentUser = auth.currentUser;
     navigate("/welcome");
     setUser(null);
   };
+
   function formatNum(value) {
-    // value can be number or string, convert to float and format to 1 decimal
     return Number(value).toFixed(1);
   }
+  
   if (loading)
     return (
-      <div style={loadingStyle}>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        background: floralBackground,
+        fontFamily: "'Poppins', sans-serif",
+        color: textColor,
+        fontSize: "18px",
+        fontWeight: "500",
+      }}>
         <div className="spinner">
           <div className="bounce1" style={{ backgroundColor: coral }}></div>
           <div className="bounce2" style={{ backgroundColor: coral }}></div>
@@ -214,7 +236,6 @@ const currentUser = auth.currentUser;
     carbs: entries.reduce((acc, e) => acc + (e.nutrients?.carbs || 0), 0),
     fats: entries.reduce((acc, e) => acc + (e.nutrients?.fat || 0), 0),
     fiber: entries.reduce((acc, e) => acc + (e.nutrients?.fiber || 0), 0),
-
   };
 
   const targets = {
@@ -232,15 +253,166 @@ const currentUser = auth.currentUser;
     fats: Math.max(targets.fats - total.fats, 0),
     fiber: Math.max(targets.fiber - total.fiber, 0),
   };
+  const dashboardStyle = {
+    minHeight: "100vh",
+    background: floralBackground,
+    padding: isMobile ? "20px 10px 80px" : "30px 20px 80px",
+    fontFamily: "'Poppins', sans-serif",
+    color: textColor,
+    position: "relative",
+    overflowX: "hidden",
+  };
+
+  // Increased top margin for mobile to prevent overlap
+  const welcomeStyle = {
+    fontSize: isMobile ? "28px" : "36px",
+    fontWeight: "600",
+    marginBottom: isMobile ? "5px" : "10px", // Reduced bottom margin for mobile
+    color: textColor,
+    textAlign: "center",
+    position: "relative",
+    zIndex: "10",
+    marginTop: isMobile ? "100px" : "40px", // Increased for mobile to prevent overlap
+  };
+
+  // Reduced bottom margin for mobile to bring closer to welcome message
+  const subtitleStyle = {
+    fontSize: "18px",
+    color: textColor,
+    textAlign: "center",
+    marginBottom: isMobile ? "20px" : "40px", // Reduced for mobile
+    fontWeight: "500",
+    position: "relative",
+    zIndex: "10",
+  };
+
+  const statsDashboard = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+    gap: "30px",
+    maxWidth: "1200px",
+    margin: "0 auto 40px",
+    position: "relative",
+    zIndex: "10",
+  };
+
+  const waterTrackerContainer = {
+    maxWidth: "600px",
+    margin: "0 auto 40px",
+    position: "relative",
+    zIndex: "10",
+    display: "flex",
+    justifyContent: "center",
+    transform: isMobile ? "scale(0.85)" : "none",
+  };
+
+  const entriesContainer = {
+    maxWidth: "800px",
+    margin: "0 auto",
+    position: "relative",
+    zIndex: "10",
+    transform: isMobile ? "scale(0.9)" : "none",
+    overflowX: isMobile ? "auto" : "visible",
+  };
+
+  const floatingButton = {
+    position: "fixed",
+    bottom: "30px",
+    right: "30px",
+    width: isMobile ? "50px" : "60px",
+    height: isMobile ? "50px" : "60px",
+    borderRadius: "50%",
+    background: `linear-gradient(135deg, ${coral}, ${lightCoral})`,
+    color: "white",
+    border: "none",
+    fontSize: isMobile ? "20px" : "24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: `0 4px 20px rgba(255, 126, 157, 0.4)`,
+    cursor: "pointer",
+    zIndex: "100",
+    transition: "all 0.3s ease",
+  };
+
+  const macroGrid = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+    gap: "15px",
+    marginBottom: "25px",
+  };
+
+  const profileButtonStyle = {
+    background: `linear-gradient(135deg, ${coral}, ${lightCoral})`,
+    color: "white",
+    border: "none",
+    padding: isMobile ? "10px 15px" : "12px 25px", // Smaller padding for mobile
+    borderRadius: "50px",
+    fontWeight: "600",
+    fontSize: isMobile ? "14px" : "16px", // Smaller font for mobile
+    cursor: "pointer",
+    boxShadow: `0 4px 15px rgba(255, 126, 157, 0.3)`,
+    transition: "all 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+  };
+
+  const logoutButtonStyle = {
+    background: "white",
+    border: `2px solid ${coral}`,
+    color: coral,
+    padding: isMobile ? "10px 15px" : "12px 25px", // Smaller padding for mobile
+    borderRadius: "50px",
+    fontWeight: "600",
+    fontSize: isMobile ? "14px" : "16px", // Smaller font for mobile
+    cursor: "pointer",
+    boxShadow: `0 4px 15px rgba(255, 126, 157, 0.2)`,
+    transition: "all 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+  };
+
+  const streakNotificationStyle = {
+    position: "fixed",
+    top: "20px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    padding: "10px 20px",
+    borderRadius: "50px",
+    fontWeight: "700",
+    color: coral,
+    boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+    zIndex: 2000,
+    animation: "fadeInOut 5s forwards",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255, 194, 214, 0.5)",
+  };
 
   return (
     <div style={dashboardStyle}>
+      {/* Floating streak notification */}
+      {showStreakNotification && streak > 0 && (
+        <div style={streakNotificationStyle}>
+          <img
+            src="/bao-frames/streak.png"
+            alt="Streak Icon"
+            style={{ width: 40, height: 40 }}
+          />
+          <span>🔥 {streak} day streak! Keep it up!</span>
+        </div>
+      )}
+      
       {/* Decorative Elements */}
       <div className="floating-bubble" style={{ top: "10%", left: "5%", animationDelay: "0s" }}></div>
       <div className="floating-bubble" style={{ top: "25%", right: "8%", animationDelay: "0.5s" }}></div>
       <div className="floating-bubble" style={{ bottom: "15%", left: "15%", animationDelay: "1s" }}></div>
       <div className="floating-bubble" style={{ bottom: "30%", right: "12%", animationDelay: "1.5s" }}></div>
-      
+  
       {/* Logo */}
       <img
         src="/kalpal-logo.png"
@@ -249,91 +421,107 @@ const currentUser = auth.currentUser;
           position: "absolute",
           top: 20,
           left: 20,
-          width: 100,
+          width: isMobile ? "60px" : "100px", // Smaller logo for mobile
           height: "auto",
           zIndex: 10,
           filter: "drop-shadow(0 0 6px rgba(255, 126, 157, 0.5))",
         }}
       />
       
-      {/* Header Buttons */}
-      <div style={{ position: "absolute", top: 20, right: 20, zIndex: 10, display: "flex", gap: "12px" }}>
-  <button
-    onClick={() => setShowProfilePanel(true)}
-    style={profileButtonStyle}
-    onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-3px)"}
-    onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-  >
-    <i className="fas fa-user" style={{ marginRight: 8 }}></i>
-    Profile
-  </button>
-  <button
-    onClick={handleLogout}
-    style={logoutButtonStyle}
-    onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-3px)"}
-    onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-  >
-    <i className="fas fa-sign-out-alt" style={{ marginRight: 8 }}></i>
-    Logout
-  </button>
-</div>
+      {/* Header Buttons - Smaller and tighter for mobile */}
+      <div style={{ 
+        position: "absolute", 
+        top: isMobile ? 15 : 20, // Higher position for mobile
+        right: isMobile ? 10 : 20, // Closer to edge for mobile
+        zIndex: 10, 
+        display: "flex", 
+        flexDirection: isMobile ? "column" : "row",
+        gap: isMobile ? "8px" : "12px" // Smaller gap for mobile
+      }}>
+        <button
+          onClick={() => setShowProfilePanel(true)}
+          style={profileButtonStyle}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-3px)"}
+          onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+        >
+          <i className="fas fa-user" style={{ marginRight: isMobile ? 5 : 8 }}></i>
+          {isMobile ? "Profile" : "Profile"}
+        </button>
+        <button
+          onClick={handleLogout}
+          style={logoutButtonStyle}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-3px)"}
+          onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+        >
+          <i className="fas fa-sign-out-alt" style={{ marginRight: isMobile ? 5 : 8 }}></i>
+          {isMobile ? "Logout" : "Logout"} 
+        </button>
+      </div>
 
-{/* Streak Display */}
-<div
-  style={{
-    position: "absolute",
-    top: 80,              // adjust to place below buttons nicely
-    right: 20,
-    zIndex: 10,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    backgroundColor: "rgba(255, 194, 214, 0.2)",
-    padding: "6px 12px",
-    borderRadius: "20px",
-    fontWeight: "700",
-    color: coral,
-    boxShadow: "0 2px 6px rgba(255, 126, 157, 0.4)",
-    userSelect: "none",
-  }}
->
-  <img
-       src={streak > 0 ? "/bao-frames/streak.png" : "/bao-frames/0streak.png"}
-    alt="Streak Icon"
-    style={{ width: 100, height: 100 }}
-  />
-  <span> {streak} days streak</span>
-</div>
-
-
-
-
-
-      {/* Welcome Message */}
+      {/* Welcome Message - with increased top margin */}
       <h1 style={welcomeStyle}>
         Good morning,{" "}
-        <span style={userNameStyle}>
+        <span style={{
+          background: `linear-gradient(135deg, ${coral}, ${textColor})`,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontWeight: "700",
+        }}>
           {profile.firstName
             ? profile.firstName.charAt(0).toUpperCase() + profile.firstName.slice(1)
             : user.email.split("@")[0]}
         </span>!
       </h1>
-      <p style={subtitleStyle}>Let's make today a healthy one!</p>
+      
+      {/* Subtitle - with reduced bottom margin */}
+      <p style={subtitleStyle}>
+        Let's make today a healthy one!
+      </p>
 
       {/* Stats Dashboard */}
       <div style={statsDashboard}>
         {/* Calorie Section */}
         <div 
-          style={calorieCard}
-          onMouseEnter={() => setHoveredCard("calories")}
-          onMouseLeave={() => setHoveredCard(null)}
+          style={{
+            background: glassCardBg,
+            backdropFilter: "blur(10px)",
+            borderRadius: "25px",
+            padding: "25px",
+            border: glassCardBorder,
+            boxShadow: "0 8px 32px rgba(255, 126, 157, 0.1)",
+            transition: "transform 0.3s ease, box-shadow 0.3s ease",
+          }}
         >
-          <div style={cardHeader}>
-            <i className="fas fa-fire" style={cardIcon}></i>
-            <h3 style={sectionTitleStyle}>Calories</h3>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "25px",
+          }}>
+            <i className="fas fa-fire" style={{
+              fontSize: "24px",
+              color: coral,
+              background: "rgba(255, 126, 157, 0.1)",
+              width: "45px",
+              height: "45px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}></i>
+            <h3 style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: textColor,
+              margin: "0",
+            }}>Calories</h3>
           </div>
           
-          <div style={chartContainer}>
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "25px",
+          }}>
             <CircleChart 
               label="Calories" 
               value={remaining.calories} 
@@ -344,36 +532,113 @@ const currentUser = auth.currentUser;
             />
           </div>
           
-          <div style={statsSummary}>
-            <div style={statItem}>
-              <div style={statLabel}>Target</div>
-              <div style={statValue}>{targets.calories} kcal</div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "15px",
+            textAlign: "center",
+          }}>
+            <div style={{
+              padding: "15px",
+              background: "rgba(255, 194, 214, 0.2)",
+              borderRadius: "15px",
+            }}>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: textColor,
+                opacity: "0.8",
+                marginBottom: "5px",
+              }}>Target</div>
+              <div style={{
+                fontSize: "18px",
+                fontWeight: "700",
+                color: textColor,
+              }}>{targets.calories} kcal</div>
             </div>
-            <div style={statItem}>
-              <div style={statLabel}>Consumed</div>
-              <div style={statValue}>{Math.round(total.calories)} kcal</div>
-
+            <div style={{
+              padding: "15px",
+              background: "rgba(255, 194, 214, 0.2)",
+              borderRadius: "15px",
+            }}>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: textColor,
+                opacity: "0.8",
+                marginBottom: "5px",
+              }}>Consumed</div>
+              <div style={{
+                fontSize: "18px",
+                fontWeight: "700",
+                color: textColor,
+              }}>{Math.round(total.calories)} kcal</div>
             </div>
-            <div style={statItem}>
-              <div style={statLabel}>Remaining</div>
-              <div style={{ ...statValue, color: coral }}>{remaining.calories} kcal</div>
+            <div style={{
+              padding: "15px",
+              background: "rgba(255, 194, 214, 0.2)",
+              borderRadius: "15px",
+            }}>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: textColor,
+                opacity: "0.8",
+                marginBottom: "5px",
+              }}>Remaining</div>
+              <div style={{
+                fontSize: "18px",
+                fontWeight: "700",
+                color: coral,
+              }}>{remaining.calories} kcal</div>
             </div>
           </div>
         </div>
         
         {/* Macros Section */}
         <div 
-          style={macroCard}
-          onMouseEnter={() => setHoveredCard("macros")}
-          onMouseLeave={() => setHoveredCard(null)}
+          style={{
+            background: glassCardBg,
+            backdropFilter: "blur(10px)",
+            borderRadius: "25px",
+            padding: "25px",
+            border: glassCardBorder,
+            boxShadow: "0 8px 32px rgba(255, 126, 157, 0.1)",
+            transition: "transform 0.3s ease, box-shadow 0.3s ease",
+          }}
         >
-          <div style={cardHeader}>
-            <i className="fas fa-apple-alt" style={cardIcon}></i>
-            <h3 style={sectionTitleStyle}>Macros</h3>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "25px",
+          }}>
+            <i className="fas fa-apple-alt" style={{
+              fontSize: "24px",
+              color: coral,
+              background: "rgba(255, 126, 157, 0.1)",
+              width: "45px",
+              height: "45px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}></i>
+            <h3 style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: textColor,
+              margin: "0",
+            }}>Macros</h3>
           </div>
           
           <div style={macroGrid}>
-            <div style={macroItem}>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+            }}>
               <CircleChart 
                 label="Protein" 
                 value={remaining.protein} 
@@ -382,12 +647,24 @@ const currentUser = auth.currentUser;
                 primaryColor={coral}
                 secondaryColor={blushPink}
               />
-              <div style={macroLabel}>Protein</div>
-              <div style={macroValue}>{Number(remaining.protein).toFixed(1)}g left</div>
-
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>Protein</div>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: coral,
+              }}>{Number(remaining.protein).toFixed(1)}g left</div>
             </div>
             
-            <div style={macroItem}>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+            }}>
               <CircleChart 
                 label="Carbs" 
                 value={remaining.carbs} 
@@ -396,11 +673,24 @@ const currentUser = auth.currentUser;
                 primaryColor={paleGold}
                 secondaryColor={blushPink}
               />
-              <div style={macroLabel}>Carbs</div>
-              <div style={macroValue}>{Number(remaining.carbs).toFixed(1)}g left</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>Carbs</div>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: coral,
+              }}>{Number(remaining.carbs).toFixed(1)}g left</div>
             </div>
             
-            <div style={macroItem}>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+            }}>
               <CircleChart 
                 label="Fats" 
                 value={remaining.fats} 
@@ -409,62 +699,132 @@ const currentUser = auth.currentUser;
                 primaryColor={softLavender}
                 secondaryColor={blushPink}
               />
-              <div style={macroLabel}>Fats</div>
-              <div style={macroValue}>{Number(remaining.fats).toFixed(1)}g left</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>Fats</div>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: coral,
+              }}>{Number(remaining.fats).toFixed(1)}g left</div>
             </div>
 
-            <div style={macroItem}>
-  <CircleChart 
-    label="Fiber" 
-    value={remaining.fiber} 
-    max={targets.fiber} 
-    size={80}
-    primaryColor={"#9ACD32"} // e.g. yellowgreen for fiber
-    secondaryColor={blushPink}
-  />
-  <div style={macroLabel}>Fiber</div>
-  <div style={macroValue}>{Number(remaining.fiber).toFixed(1)}g left</div>
-</div>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+            }}>
+              <CircleChart 
+                label="Fiber" 
+                value={remaining.fiber} 
+                max={targets.fiber} 
+                size={80}
+                primaryColor={"#9ACD32"}
+                secondaryColor={blushPink}
+              />
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>Fiber</div>
+              <div style={{
+                fontSize: "14px",
+                fontWeight: "500",
+                color: coral,
+              }}>{Number(remaining.fiber).toFixed(1)}g left</div>
+            </div>
           </div>
           
-          <div style={macroSummary}>
-            <div style={macroSummaryItem}>
-              <div style={macroSummaryLabel}>Protein:</div>
-              <div style={macroSummaryValue}> {formatNum(total.protein)}g / {formatNum(targets.protein)}g</div>
+          <div style={{
+            background: "rgba(255, 194, 214, 0.2)",
+            borderRadius: "15px",
+            padding: "20px",
+          }}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "12px",
+            }}>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "500",
+                color: textColor,
+              }}>Protein:</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}> {formatNum(total.protein)}g / {formatNum(targets.protein)}g</div>
             </div>
-            <div style={macroSummaryItem}>
-              <div style={macroSummaryLabel}>Carbs:</div>
-              <div style={macroSummaryValue}> {formatNum(total.carbs)}g / {formatNum(targets.carbs)}g</div>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "12px",
+            }}>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "500",
+                color: textColor,
+              }}>Carbs:</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}> {formatNum(total.carbs)}g / {formatNum(targets.carbs)}g</div>
             </div>
-            <div style={macroSummaryItem}>
-              <div style={macroSummaryLabel}>Fats:</div>
-              <div style={macroSummaryValue}>{formatNum(total.fats)}g / {formatNum(targets.fats)}g</div>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "12px",
+            }}>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "500",
+                color: textColor,
+              }}>Fats:</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>{formatNum(total.fats)}g / {formatNum(targets.fats)}g</div>
             </div>
-
-            <div style={macroSummaryItem}>
-  <div style={macroSummaryLabel}>Fiber:</div>
-  <div style={macroSummaryValue}>
-    {formatNum(total.fiber)}g / {formatNum(targets.fiber)}
-  </div>
-</div>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "12px",
+            }}>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "500",
+                color: textColor,
+              }}>Fiber:</div>
+              <div style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                color: textColor,
+              }}>
+                {formatNum(total.fiber)}g / {formatNum(targets.fiber)}
+              </div>
+            </div>
           </div>
-
         </div>
       </div>
       
-
-      
       {/* Centered Water Tracker */}
       <div style={waterTrackerContainer}>
-      <WaterTracker gender={profile.gender || "male"} currentUser={user} />
-
+        <WaterTracker gender={profile.gender || "male"} currentUser={user} />
       </div>
       
-      {/* Food Input + Entries */}
-      <div style={entriesContainer}>
+       {/* Food Input + Entries */}
+       <div style={entriesContainer}>
         <EntriesTable 
-      entries={entries.filter(e => e.type !== "water")}
-         onDelete={handleDeleteEntry} />
+          entries={entries.filter(e => e.type !== "water")}
+          onDeleteEntry={handleDeleteEntry}
+
+        />
       </div>
       
       {/* Profile Side Panel */}
@@ -472,24 +832,30 @@ const currentUser = auth.currentUser;
         <ProfilePanel user={user} onClose={() => setShowProfilePanel(false)} />
       )}
       
-      {/* Floating action button */}
-      <button 
-        style={floatingButton}
-        onClick={() => setShowFoodPanel(true)}
-        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.1)"}
-        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-      >
-        <i className="fas fa-plus"></i>
-      </button>
+  {/* Floating action button - ALWAYS VISIBLE */}
+<button
+  style={{
+    ...floatingButton,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.5rem", // ensures icon is visible
+  }}
+  onClick={() => setShowFoodPanel(true)}
+  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+>
+  <i className="fas fa-plus" style={{ pointerEvents: "none" }}></i>
+</button>
+
+      
       
       {/* Food Panel Modal */}
       {showFoodPanel && (
         <div className="w-full max-w-3xl mt-10 mx-auto p-4 bg-white/70 backdrop-blur-md rounded-2xl shadow-md border border-pink-200">
-  <FloatingFoodPanel onAddEntry={handleAddEntry} />
-</div>
+          <FloatingFoodPanel onAddEntry={handleAddEntry} />
+        </div>
       )}
       
-      {/* CSS Animations */}
       <style jsx>{`
         @keyframes float {
           0% { transform: translateY(0px); }
@@ -501,6 +867,13 @@ const currentUser = auth.currentUser;
           0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
           40% {transform: translateY(-15px);}
           60% {transform: translateY(-7px);}
+        }
+        
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translate(-50%, -20px); }
+          10% { opacity: 1; transform: translate(-50%, 0); }
+          90% { opacity: 1; transform: translate(-50%, 0); }
+          100% { opacity: 0; transform: translate(-50%, -20px); }
         }
         
         .floating-bubble {
@@ -540,309 +913,3 @@ const currentUser = auth.currentUser;
     </div>
   );
 }
-
-// Styles
-const dashboardStyle = {
-  minHeight: "100vh",
-  background: floralBackground,
-  padding: "30px 20px 80px",
-  fontFamily: "'Poppins', sans-serif",
-  color: textColor,
-  position: "relative",
-  overflowX: "hidden",
-};
-
-const loadingStyle = {
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  height: "100vh",
-  background: floralBackground,
-  fontFamily: "'Poppins', sans-serif",
-  color: textColor,
-  fontSize: "18px",
-  fontWeight: "500",
-};
-
-const welcomeStyle = {
-  fontSize: "36px",
-  fontWeight: "600",
-  marginBottom: "10px",
-  color: textColor,
-  textAlign: "center",
-  position: "relative",
-  zIndex: "10",
-  marginTop: "40px",
-};
-
-const userNameStyle = {
-  background: `linear-gradient(135deg, ${coral}, ${textColor})`,
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  fontWeight: "700",
-};
-
-const subtitleStyle = {
-  fontSize: "18px",
-  color: textColor,
-  textAlign: "center",
-  marginBottom: "40px",
-  fontWeight: "500",
-  position: "relative",
-  zIndex: "10",
-};
-
-const statsDashboard = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "30px",
-  maxWidth: "1200px",
-  margin: "0 auto 40px",
-  position: "relative",
-  zIndex: "10",
-};
-
-const calorieCard = {
-  background: glassCardBg,
-  backdropFilter: "blur(10px)",
-  borderRadius: "25px",
-  padding: "25px",
-  border: glassCardBorder,
-  boxShadow: "0 8px 32px rgba(255, 126, 157, 0.1)",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-};
-
-const macroCard = {
-  background: glassCardBg,
-  backdropFilter: "blur(10px)",
-  borderRadius: "25px",
-  padding: "25px",
-  border: glassCardBorder,
-  boxShadow: "0 8px 32px rgba(255, 126, 157, 0.1)",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-};
-
-const cardHeader = {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  marginBottom: "25px",
-};
-
-const cardIcon = {
-  fontSize: "24px",
-  color: coral,
-  background: "rgba(255, 126, 157, 0.1)",
-  width: "45px",
-  height: "45px",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const sectionTitleStyle = {
-  fontSize: "22px",
-  fontWeight: "700",
-  color: textColor,
-  margin: "0",
-};
-
-const chartContainer = {
-  display: "flex",
-  justifyContent: "center",
-  marginBottom: "25px",
-};
-
-const statsSummary = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr",
-  gap: "15px",
-  textAlign: "center",
-};
-
-const statItem = {
-  padding: "15px",
-  background: "rgba(255, 194, 214, 0.2)",
-  borderRadius: "15px",
-};
-
-const statLabel = {
-  fontSize: "14px",
-  fontWeight: "500",
-  color: textColor,
-  opacity: "0.8",
-  marginBottom: "5px",
-};
-
-const statValue = {
-  fontSize: "18px",
-  fontWeight: "700",
-  color: textColor,
-};
-
-const macroGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)", // changed from 3 to 4 columns
-  gap: "15px",
-  marginBottom: "25px",
-};
-
-const macroItem = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "10px",
-};
-
-const macroLabel = {
-  fontSize: "16px",
-  fontWeight: "600",
-  color: textColor,
-};
-
-const macroValue = {
-  fontSize: "14px",
-  fontWeight: "500",
-  color: coral,
-};
-
-const macroSummary = {
-  background: "rgba(255, 194, 214, 0.2)",
-  borderRadius: "15px",
-  padding: "20px",
-};
-
-const macroSummaryItem = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: "12px",
-};
-
-const macroSummaryLabel = {
-  fontSize: "16px",
-  fontWeight: "500",
-  color: textColor,
-};
-
-const macroSummaryValue = {
-  fontSize: "16px",
-  fontWeight: "600",
-  color: textColor,
-};
-
-const waterTrackerContainer = {
-  maxWidth: "600px",
-  margin: "0 auto 40px",
-  position: "relative",
-  zIndex: "10",
-  display: "flex",
-  justifyContent: "center",
-};
-
-const entriesContainer = {
-  maxWidth: "800px",
-  margin: "0 auto",
-  position: "relative",
-  zIndex: "10",
-};
-
-const floatingButton = {
-  position: "fixed",
-  bottom: "30px",
-  right: "30px",
-  width: "60px",
-  height: "60px",
-  borderRadius: "50%",
-  background: `linear-gradient(135deg, ${coral}, ${lightCoral})`,
-  color: "white",
-  border: "none",
-  fontSize: "24px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: `0 4px 20px rgba(255, 126, 157, 0.4)`,
-  cursor: "pointer",
-  zIndex: "100",
-  transition: "all 0.3s ease",
-};
-
-const buttonRowStyle = {
-  display: "flex",
-  gap: "12px",            // spacing between buttons
-  justifyContent: "center", // or "flex-end" / "space-between" depending on layout
-  alignItems: "center",
-  marginTop: "16px",
-};
-const profileButtonStyle = {
-  background: `linear-gradient(135deg, ${coral}, ${lightCoral})`,
-  color: "white",
-  border: "none",
-  padding: "12px 25px",
-  borderRadius: "50px",
-  fontWeight: "600",
-  fontSize: "16px",
-  cursor: "pointer",
-  boxShadow: `0 4px 15px rgba(255, 126, 157, 0.3)`,
-  transition: "all 0.3s ease",
-  display: "flex",
-  alignItems: "center",
-};
-
-const logoutButtonStyle = {
-  background: "white",
-  border: `2px solid ${coral}`,
-  color: coral,
-  padding: "12px 25px",
-  borderRadius: "50px",
-  fontWeight: "600",
-  fontSize: "16px",
-  cursor: "pointer",
-  boxShadow: `0 4px 15px rgba(255, 126, 157, 0.2)`,
-  transition: "all 0.3s ease",
-  display: "flex",
-  alignItems: "center",
-};
-
-const modalOverlayStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  backdropFilter: "blur(5px)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-};
-
-const modalContentStyle = {
-  backgroundColor: "white",
-  borderRadius: "20px",
-  padding: "30px",
-  boxShadow: "0 10px 50px rgba(255, 126, 157, 0.4)",
-  maxWidth: "500px",
-  width: "90%",
-  position: "relative",
-};
-
-const closeButtonStyle = {
-  position: "absolute",
-  top: "15px",
-  right: "15px",
-  background: "none",
-  border: "none",
-  fontSize: "24px",
-  color: coral,
-  cursor: "pointer",
-  width: "40px",
-  height: "40px",
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  transition: "all 0.3s ease",
-};
